@@ -1,0 +1,626 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: RHCE-AK.auto
+#
+#           Auother : WangXinKun
+#
+#           Created : 11:07,03/08/2019
+#===========================================================================
+#说明:用前请打通墙壁(server0生成公钥及传输给desktop0私钥)双方请使用以下指令:
+#ssh-keygen(一路回车即可);ssh-copy-id root@172.25.0.xx(写对方ip)
+#firewall-cmd --set-default-zone=trusted(两边都要打开,否则无法配置desktop0)
+#desktop0分区用fdisk
+cecho () {
+echo -e  "                  |  \033[1;32mC\033[0m    \033[1;33mS\033[0m    \033[1;35mD\033[0m    \033[1;36mN\033[0m    \E[1;35m阿\033[0m    \033[1;34m坤\033[0m     |"
+}
+
+echo     '                                 .-"""-.                '
+echo     "                                / .===. \               "
+echo     "                                \/ 6 6 \/               "
+echo     "                                ( \___/ )               "
+echo     "                   _________ooo__\_____/_____________   "
+echo     "                  /                                  \  "
+                                            cecho
+echo     "                  \_______________________ooo________/  "
+echo     "                                 |  |  |                "
+echo     "                                 |_ | _|                "
+echo     "                                 |  |  |                "
+echo     "                                 |__|__|                "
+echo     "                                 /-'Y'-\                "
+echo     "                                (__/ \__)               "
+
+echo    "=====================Oo欢迎使用阿坤脚本,祝您使用愉快oO==========================="
+echo -e "*                         \033[36mOoRHCE-AK自动答题开始oO\033[0m                               *"
+a=！
+mainconfig () {
+   sed -i 's/#relayhost = [gateway.my.domain]/relayhost = [smtp0.example.com]/g'                    /etc/postfix/main.cf
+   sed -i 's/#myorigin = $myhostname/myorigin = desktop0.example.com/g'                             /etc/postfix/main.cf
+   sed -i 's/inet_interfaces = all/inet_interfaces = loopback-only/g'                               /etc/postfix/main.cf
+   sed -i 's/#mynetworks = 168.100.189.0\/28, 127.0.0.0\/8/mynetworks =  127.0.0.0\/8 [::1]\/128/g' /etc/postfix/main.cf
+   sed -i 's/mydestination = $myhostname, localhost.$mydomain, localhost/mydestination = /g'        /etc/postfix/main.cf
+   echo "local_transport = error:local delivery disabled"  >>                                       /etc/postfix/main.cf
+}
+#配置SELinux:
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+setenforce 1 &&
+echo "
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=enforcing
+# SELINUXTYPE= can take one of these two values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected. 
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted
+" > /etc/selinux/config
+grep "SELINUX=enforcing" /etc/selinux/config                                                         &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m01.\033[0m配置SELinux服务-----------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "配置SELinux服务------------------\033[31m[Failed$a]\033[0m"
+fi
+EOF
+#server0
+setenforce 1 &&
+echo "
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=enforcing
+# SELINUXTYPE= can take one of these two values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected. 
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted
+" > /etc/selinux/config
+grep "SELINUX=enforcing" /etc/selinux/config                                                         &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m01.\033[0m配置SELinux服务-----------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "配置SELinux服务------------------\033[31m[Failed$a]\033[0m"
+fi
+#配置SSH访问:
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+echo ok
+if [ $? -eq 0 ]
+   then
+        firewall-cmd --permanent  --zone=block  --add-source=172.34.0.0/24
+   else
+       break
+fi 
+grep "172.34.0.0/24" /etc/firewalld/zones/block.xml &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "配置SSH访问------------------\033[33m[OK$a]\033[0m"
+   else
+        echo -e "配置SSH访问------------------\033[31m[Failed$a]\033[0m"
+fi
+EOF
+#server0
+if [ $? -eq 0 ]
+   then
+        firewall-cmd --permanent  --zone=block  --add-source=172.34.0.0/24                                                       &>/dev/null
+   else
+       break
+fi 
+grep "172.34.0.0/24" /etc/firewalld/zones/block.xml &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m02.\033[0m配置SSH访问---------------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "配置SSH访问------------------\033[31m[Failed$a]\033[0m"
+fi
+firewall-cmd --reload &>/dev/null &&
+#自定义用户环境:
+#server0
+if [ $? -eq 0 ]
+   then
+        echo "alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'" >> /etc/bashrc
+   else
+       break
+fi
+grep "alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'" /etc/bashrc &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m03.\033[0m配置别名定义--------------------------\033[33m[ OK$a]\033[0m                  *"
+   else 
+        echo -e "qstat别名定义------------------\033[31m[Failed$a]\033[0m"
+fi
+source /etc/bashrc
+qstat                                                                                                &>/dev/null 
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+echo ok
+if [ $? -eq 0 ]
+   then
+        echo "alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'" >> /etc/bashrc
+   else
+       break
+fi
+grep "alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'" /etc/bashrc &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "qstat别名定义------------------\033[33m[OK$a]\033[0m"
+   else 
+        echo -e "qstat别名定义------------------\033[31m[Failed$a]\033[0m"
+fi
+source /etc/bashrc
+qstat                                                                                                &>/dev/null
+EOF
+#配置防火墙端口转发:
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+echo ok
+if [ $? -eq 0 ]
+   then
+       firewall-cmd --permanent --zone=trusted  --add-forward-port=port=5423:proto=tcp:toport=80     &>/dev/null
+   else
+       break
+fi
+egrep "forward-port to-port=\"80\" protocol=\"tcp\" port=\"5423\"" /etc/firewalld/zones/trusted.xml  &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "Firewall端口转发------------------\033[33m[OK$a]\033[0m"
+   else
+        echo -e "Firewall端口转发------------------\033[31m[Failed$a]\033[0m"
+fi
+firewall-cmd --reload
+EOF
+#server0
+if [ $? -eq 0 ]
+   then
+       firewall-cmd --permanent --zone=trusted  --add-forward-port=port=5423:proto=tcp:toport=80     &>/dev/null
+   else
+       break
+fi
+egrep "forward-port to-port=\"80\" protocol=\"tcp\" port=\"5423\"" /etc/firewalld/zones/trusted.xml  &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m04.\033[0m配置端口转发--------------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "Firewall端口转发------------------\033[31m[Failed$a]\033[0m"
+fi
+firewall-cmd --reload &>/dev/null &&
+#配置链路聚合:
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+echo ok
+if [ $? -eq 0 ]
+   then
+       nmcli connection add type team ifname team0 con-name team0 autoconnect yes config '{"runner": {"name": "activebackup"}}'  &>/dev/null
+       nmcli connection add type team-slave ifname eth1 con-name team0-1 master team0                                            &>/dev/null
+       nmcli connection add type team-slave ifname eth2 con-name team0-2 master team0                                            &>/dev/null
+       nmcli connection modify team0-1 connection.autoconnect yes
+       nmcli connection modify team0-2 connection.autoconnect yes
+       nmcli connection modify team0 ipv4.method manual ipv4.addresses '172.16.3.25/24' connection.autoconnect yes
+   else
+       break
+fi
+nmcli connection up team0                                                                                                        &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "Team0链路聚合------------------\033[33m[OK$a]\033[0m"
+   else
+        echo -e "Team0链路聚合------------------\033[31m[Failed$a]\033[0m"
+fi
+teamdctl team0 state                                                                                                             &>/dev/null
+EOF
+#server0
+if [ $? -eq 0 ]
+   then
+       nmcli connection add type team ifname team0 con-name team0 autoconnect yes config '{"runner": {"name": "activebackup"}}'  &>/dev/null
+       nmcli connection add type team-slave ifname eth1 con-name team0-1 master team0                                            &>/dev/null
+       nmcli connection add type team-slave ifname eth2 con-name team0-2 master team0                                            &>/dev/null
+       nmcli connection modify team0-1 connection.autoconnect yes
+       nmcli connection modify team0-2 connection.autoconnect yes
+       nmcli connection modify team0 ipv4.method manual ipv4.addresses '172.16.3.20/24' connection.autoconnect yes
+   else
+       break
+fi
+nmcli connection up team0                                                                                                        &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m05.\033[0m配置链路聚合--------------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "Team0链路聚合------------------\033[31m[Failed$a]\033[0m"
+fi
+teamdctl team0 state                                                                                                             &>/dev/null &&
+#配置IPv6地址:
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+echo ok
+if [ $? -eq 0 ]
+   then
+       nmcli connection modify 'System eth0' ipv6.method manual ipv6.addresses '2003:ac18::306/64' connection.autoconnect yes 
+   else
+       break
+fi
+nmcli connection up 'System eth0'                                                                                                &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "配置IPv6地址------------------\033[33m[OK$a]\033[0m"
+   else
+        echo -e "配置IPv6地址------------------\033[31m[Failed$a]\033[0m"
+fi
+hostnamectl set-hostname desktop0.example.com
+EOF
+#server0
+if [ $? -eq 0 ]
+   then
+       nmcli connection modify 'System eth0' ipv6.method manual ipv6.addresses '2003:ac18::305/64' connection.autoconnect yes 
+   else
+       break
+fi
+nmcli connection up 'System eth0'                                                                                                &>/dev/null
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m06.\033[0m配置IPv6地址--------------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "配置IPv6地址------------------\033[31m[Failed$a]\033[0m"
+fi
+hostnamectl set-hostname server0.example.com &&
+#配置本地邮件服务:
+lab smtp-nullclient setup                                                                                                        &>/dev/null &&
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+lab smtp-nullclient setup
+EOF
+if [ $? -eq 0 ]
+   then
+       mainconfig
+   else
+       break
+fi
+systemctl restart postfix &>/dev/null && echo -e "*              \E[35m07.\033[0m配置mail服务--------------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "配置mail服务------------------\033[31m[Failed$a]\033[0m"
+systemctl enable  postfix &>/dev/null &&
+#Samba发布共享目录:
+#Server0端
+yum -y install samba                                                                                                             &>/dev/null
+rpm -q samba                                                                                                                     &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+       mkdir /common  /devops &&
+       setsebool -P samba_export_all_rw on
+   useradd harry;pdbedit -a harry<<EOF                                                                                           &>/dev/null
+migwhisk
+migwhisk
+EOF
+   useradd kenji;pdbedit -a kenji<<EOF                                                                                           &>/dev/null
+atenorth
+atenorth
+EOF
+   useradd chihiro;pdbedit -a chihiro<<EOF                                                                                       &>/dev/null
+atenorth
+atenorth
+EOF
+       sed -i 's/workgroup = MYGROUP/workgroup = STAFF/g' /etc/samba/smb.conf
+       echo "[common]
+path = /common
+hosts allow = 172.25.0.0/24
+[devops]
+path = /devops
+hosts allow = 172.25.0.0/24
+write list = chihiro
+" >> /etc/samba/smb.conf
+       setfacl -m u:chihiro:rwx /devops
+      else
+          break
+fi
+systemctl restart smb &>/dev/null
+systemctl enable  smb &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m08.\033[0m搭建Samba服务-------------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "搭建Samba服务-----------------\033[31m[Failed$a]\033[0m"
+fi
+#Desktop端
+ssh  root@172.25.0.10 <<EOF                                                                                                      &>/dev/null
+yum -y install samba-client cifs-utils                                                                                           &>/dev/null
+mkdir /mnt/dev
+if [ $? -eq 0 ]
+   then
+       echo "//172.25.0.11/devops /mnt/dev cifs user=kenji,pass=atenorth,multiuser,sec=ntlmssp,_netdev 0 0" >> /etc/fstab
+   else
+       break
+fi 
+mount -a 
+EOF
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m09.\033[0m配置Samba多用户-----------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "配置Samba多用户------------------\033[31m[Failed$a]\033[0m"
+fi
+#配置NFS共享:
+#Server0
+lab nfskrb5 setup                                                                                                                  &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+       mkdir -p /public /protected/project
+           chown ldapuser0 /protected/project
+   wget -O /etc/krb5.keytab http://classroom.example.com/pub/keytabs/server0.keytab                                                &>/dev/null
+       echo "/public 172.25.0.0/24(ro)
+/protected 172.25.0.0/24(rw,sec=krb5p)
+" > /etc/exports
+   else
+       break
+fi
+systemctl restart nfs-secure-server nfs-server &>/dev/null && echo -e "*              \E[35m10.\033[0m搭建NFS服务---------------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "搭建NFS服务------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  nfs-secure-server nfs-server &>/dev/null
+#desktop0
+ssh  root@172.25.0.10 <<EOF                                                                                                        &>/dev/null
+lab nfskrb5 setup                                                                                                                  &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+       mkdir /mnt/nfsmount /mnt/nfssecure
+   wget -O /etc/krb5.keytab http://classroom.example.com/pub/keytabs/desktop0.keytab                                               &>/dev/null
+             systemctl restart nfs-secure                                                                                          &>/dev/null
+             systemctl enable  nfs-secure                                                                                          &>/dev/null
+       echo "172.25.0.11:/public /mnt/nfsmount nfs _netdev 0 0
+172.25.0.11:/protected /mnt/nfssecure nfs sec=krb5p,_netdev 0 0" >> /etc/fstab
+   else
+       break
+fi
+mount -a                                                                                                                           &>/dev/null
+EOF
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m11.\033[0m挂载NFS服务---------------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "挂载NFS服务-----------------\033[31m[Failed$a]\033[0m"
+fi
+#实现一个Web服务器:
+yum -y install httpd                                                                                                               &>/dev/null
+rpm -q httpd                                                                                                                       &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+       wget -O /var/www/html/index.html http://classroom.example.com/pub/materials/station.html                                    &>/dev/null
+   echo "<VirtualHost *:80>
+ServerName server0.example.com
+DocumentRoot /var/www/html
+</VirtualHost>" > /etc/httpd/conf.d/vhost.conf
+   else
+       break
+fi
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m12.\033[0m搭建Web服务---------------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "搭建Web服务------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  httpd &>/dev/null &&
+#配置安全Web服务:
+yum -y install mod_ssl                                                                                                             &>/dev/null
+rpm -q mod_ssl                                                                                                                     &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+wget -O /etc/pki/tls/certs/server0.crt  http://classroom.example.com/pub/tls/certs/server0.crt                                     &>/dev/null
+wget -O /etc/pki/tls/certs/example-ca.crt  http://classroom.example.com/pub/example-ca.crt                                         &>/dev/null
+wget -O /etc/pki/tls/private/server0.key http://classroom.example.com/pub/tls/private/server0.key                                  &>/dev/null
+   sed -i 's/#DocumentRoot "\/var\/www\/html"/DocumentRoot "\/var\/www\/html"/g'   /etc/httpd/conf.d/ssl.conf
+   sed -i 's/#ServerName www.example.com:443/ServerName server0.example.com:443/g' /etc/httpd/conf.d/ssl.conf
+   sed -i 's/SSLCertificateFile \/etc\/pki\/tls\/certs\/localhost.crt/SSLCertificateFile \/etc\/pki\/tls\/certs\/server0.crt/g'           /etc/httpd/conf.d/ssl.conf
+   sed -i 's/SSLCertificateKeyFile \/etc\/pki\/tls\/private\/localhost.key/SSLCertificateKeyFile \/etc\/pki\/tls\/private\/server0.key/g' /etc/httpd/conf.d/ssl.conf
+   sed -i 's/#SSLCACertificateFile \/etc\/pki\/tls\/certs\/ca-bundle.crt/SSLCACertificateFile \/etc\/pki\/tls\/certs\/example-ca.crt/g'   /etc/httpd/conf.d/ssl.conf
+  else
+      break
+fi
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m13.\033[0m搭建Web.key服务-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "搭建Web.key服务------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  httpd &>/dev/null
+#配置虚拟主机:
+if [ $? -eq 0 ]
+   then
+       mkdir /var/www/virtual
+   wget -O /var/www/virtual/index.html http://classroom.example.com/pub/materials/www.html                                         &>/dev/null
+            useradd fleyd;setfacl -m u:fleyd:rwx /var/www/virtual
+       echo "<VirtualHost *:80>
+ServerName www0.example.com
+DocumentRoot /var/www/virtual
+</VirtualHost>
+" >> /etc//httpd/conf.d/vhost.conf
+   else
+       break
+fi
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m14.\033[0m搭建Web.virtual服务-------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "搭建Web.virtual服务------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  httpd &>/dev/null
+#配置Web内容访问:
+if [ $? -eq 0 ]
+   then
+       mkdir /var/www/html/private
+wget -O /var/www/html/private/index.html http://classroom.example.com/pub/materials/private.html                                   &>/dev/null
+   echo '<Directory "/var/www/html/private">
+Require ip 127.0.0.1 ::1 172.25.0.11
+</Directory>
+' > /etc/httpd/conf.d/power.conf
+   else
+       break
+fi
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m15.\033[0m搭建Web内容服务-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "搭建Web内容服务------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  httpd &>/dev/null
+#实现动态Web内容:
+yum -y install mod_wsgi                                                                                                            &>/dev/null
+rpm -q mod_wsgi                                                                                                                    &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+       mkdir /var/www/myweb
+       wget  -O /var/www/myweb/webinfo.wsgi http://classroom.example.com/pub/materials/webinfo.wsgi                                             &>/dev/null
+       echo "Listen 8909
+<VirtualHost *:8909>
+ServerName webapp0.example.com
+DocumentRoot /var/www/myweb
+WsgiScriptAlias / /var/www/myweb/webinfo.wsgi
+</VirtualHost>
+" >> /etc/httpd/conf.d/vhost.conf
+      semanage port -a -t http_port_t -p tcp 8909
+   else
+       break
+fi
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m16.\033[0m搭建动态Web内容-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "搭建动态Web内容------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  httpd &>/dev/null
+#创建一个脚本:
+touch foo.sh &&
+if [ $? -eq 0 ]
+   then
+       echo '#!/bin/bash
+if [ "$1" = "redhat" ];then
+ echo "fedora"
+elif [ "$1" = "fedora" ];then
+ echo "redhat"
+else
+  echo "/root/foo.sh redhat|fedora" >&2
+fi' > /root/foo.sh
+      chmod +x /root/foo.sh
+   else
+       break
+fi
+sh /root/foo.sh &>/dev/null        || 
+sh /root/foo.sh redhat &>/dev/null &&
+sh /root/foo.sh fedora &>/dev/null && echo -e "*              \E[35m17.\033[0m创建一个脚本--------------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "创建一个脚本------------------\033[33m[Failed$a]\033[0m"
+#添加用户脚本:
+touch /root/batchusers &&
+if [ $? -eq 0 ]
+   then 
+        wget http://classroom.example.com/pub/materials/userlist &>/dev/null
+   echo '#!/bin/bash
+if [ $# -eq 0 ];then
+ echo "Usage: /root/batchusers <userfile>"
+ exit 1
+fi
+if [ ! -f $1 ];then
+ echo "Input file not found"
+ exit 2
+fi
+for i in $(cat $1)
+do
+ useradd -s /bin/false $i
+done
+' > /root/batchusers
+        chmod +x /root/batchusers
+   else
+       break
+fi
+sh /root/batchusers          &>/dev/null ||
+sh /root/batchusers wxk      &>/dev/null ||
+sh /root/batchusers userlist &>/dev/null && echo -e "*              \E[35m18.\033[0m脚本创建用户--------------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "脚本创建用户------------------\033[33m[Failed$a]\033[0m"
+#配置网络磁盘iscsi:
+#server0
+yum -y install targetcli &>/dev/null
+rpm -q targetcli         &>/dev/null
+if [ $? -eq 0 ]
+   then
+  parted /dev/vdb <<EOF  &>/dev/null 
+mklabel gpt
+mkpart
+wxk
+ext4
+0
+3200
+q
+EOF
+  targetcli <<EOF 
+backstores/block create iscsi_store /dev/vdb1
+iscsi/ create iqn.2016-02.com.example:server0
+iscsi/iqn.2016-02.com.example:server0/tpg1/luns create /backstores/block/iscsi_store
+iscsi/iqn.2016-02.com.example:server0/tpg1/acls create iqn.2016-02.com.example:desktop0
+iscsi/iqn.2016-02.com.example:server0/tpg1/portals create 172.25.0.11 3260
+saveconfig
+exit
+EOF
+   else
+       break
+fi
+systemctl restart target &>/dev/null && echo -e "*              \E[35m19.\033[0m配置iscsi服务端-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+   echo -e "配置iscsi服务端------------------\033[33m[Failed$a]\033[0m"
+systemctl enable  target &>/dev/null
+#desktop0@
+ssh  root@172.25.0.10 <<EOF                                                                   &>/dev/null
+yum -y install iscsi-initiator-utils                                                          &>/dev/null
+rpm -q iscsi-initiator-utils                                                                  &>/dev/null 
+if [ $? -eq 0 ]
+   then
+       echo "InitiatorName=iqn.2016-02.com.example:desktop0" > /etc/iscsi/initiatorname.iscsi
+systemctl restart iscsid                                                                      &>/dev/null
+systemctl enable  iscsid                                                                      &>/dev/null
+iscsiadm --mode discoverydb --type sendtargets --portal 172.25.0.11 3260 --discover           &>/dev/null
+systemctl restart iscsi                                                                       &>/dev/null
+systemctl enable  iscsi                                                                       &>/dev/null
+
+      mkdir /mnt/data
+  sed -i 's/startup = manual/startup = automatic/g' /var/lib/iscsi/nodes/iqn.2016-02.com.example\:server0/172.25.0.11\,3260\,1/default
+      echo "/dev/sda1 /mnt/data ext4 _netdev 0 0" >> /etc/fstab
+   else
+       break
+fi
+      
+EOF
+if [ $? -eq 0 ]
+   then
+        echo -e "*              \E[35m20.\033[0m配置iscsi客户端-----------------------\033[33m[ OK$a]\033[0m                  *"
+   else
+        echo -e "配置iscsi客户端-----------------\033[31m[Failed$a]\033[0m"
+fi
+#配置数据库:
+yum -y install mariadb-server                                                                 &>/dev/null
+rpm -q mariadb-server                                                                         &>/dev/null &&
+if [ $? -eq 0 ]
+   then
+       echo "[mysqld]
+skip-networking
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+# Settings user and group are ignored when systemd is used.
+# If you need to run mysqld under a different user or group,
+# customize your systemd unit file for mariadb according to the
+# instructions in http://fedoraproject.org/wiki/Systemd
+
+[mysqld_safe]
+log-error=/var/log/mariadb/mariadb.log
+pid-file=/var/run/mariadb/mariadb.pid
+
+#
+# include all files from the config directory
+#
+!includedir /etc/my.cnf.d
+" > /etc/my.cnf
+   systemctl restart mariadb                    &>/dev/null
+   systemctl enable  mariadb                    &>/dev/null
+         mysqladmin -u root password 'atenorth' &>/dev/null
+mysql -patenorth <<EOF                          &>/dev/null
+create database Contacts;
+use Contacts;
+grant select on Contacts.* to Raikon@localhost identified by 'atenorth';
+delete from mysql.user where password='';
+flush privileges;
+quit
+EOF
+      wget http://classroom.example.com/pub/materials/users.sql  &>/dev/null
+mysql -patenorth Contacts < users.sql
+mysql -patenorth <<EOF                         &>/dev/null
+use Contacts;
+select name from base where password='solicitous';
+select count(*) from base,location where base.name='Barbara' and location.city='Sunnyvale' and base.id=location.id;
+quit
+EOF
+   else
+       echo -e "配置mariadb服务----------------\033[31m[Failed$a]\033[0m"
+fi
+systemctl restart mariadb &>/dev/null && echo -e "*              \E[35m21.\033[0m配置mariadb服务-----------------------\033[33m[ OK$a]\033[0m                *" ||
+echo -e "配置mariadb服务----------------\033[31m[Failed$a]\033[0m"
+echo    "*                 --------------自动答题完成!---------------                   *"
+echo    "==============================期待您的再次使用！！==============================="
+

@@ -1,0 +1,161 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: PXEauto.sh
+#
+#           Auother : WangXinKun
+#
+#           Created : 13:31,31/07/2019
+#===========================================================================
+echo    "=====================Oo欢迎使用阿坤脚本,祝您使用愉快oO====================="
+a=!
+yum -y install httpd &>/dev/null
+rpm -q httpd &>/dev/null &&
+mkdir /var/www/html/centos
+mount /dev/cdrom /var/www/html/centos &>/dev/null &&  echo -e "*              I.Web服务------------------------\033[33m[ready$a]\033[0m                  *"
+#yum -y install system-config-kickstart &>/dev/null
+#rpm -q system-config-kickstart &>/dev/null &&
+echo "#platform=x86, AMD64, or Intel EM64T
+#version=DEVEL
+# Install OS instead of upgrade
+install
+# Keyboard layouts
+keyboard 'us'
+# Root password
+rootpw --iscrypted $1$zjCK.pRB$k38r54VUUMegOfFgK8KND/
+# Use network installation
+url --url="http://192.168.4.7/centos"
+# System language
+lang en_US
+# System authorization information
+auth  --useshadow  --passalgo=sha512
+# Use graphical install
+graphical
+firstboot --disable
+# SELinux configuration
+selinux --disabled
+
+# Firewall configuration
+firewall --disabled
+# Network information
+network  --bootproto=dhcp --device=eth0
+# Reboot after installation
+reboot
+# System timezone
+timezone Asia/Shanghai
+# System bootloader configuration
+bootloader --location=mbr
+# Clear the Master Boot Record
+zerombr
+# Partition clearing information
+clearpart --all --initlabel
+# Disk partitioning information
+part / --fstype="xfs" --grow --size=1
+
+%packages
+@base
+
+%end" > /var/www/html/ks.cfg &&  echo -e "*              II.Ks应答文件--------------------\033[33m[ready$a]\033[0m                  *"
+yum -y install tftp-server &>/dev/null
+rpm -q tftp-server &>/dev/null &&
+yum -y install syslinux &>/dev/null
+rpm -q syslinux &>/dev/null &&
+cd /var/www/html/centos/isolinux
+\cp -p  /usr/share/syslinux/pxelinux.0 vmlinuz splash.png  vesamenu.c32 initrd.img /var/lib/tftpboot/
+cd /var/lib/tftpboot/
+mkdir pxelinux.cfg
+echo "default vesamenu.c32
+timeout 600
+
+display boot.msg
+
+# Clear the screen when exiting the menu, instead of leaving the menu displayed.
+# For vesamenu, this means the graphical background is still displayed without
+# the menu itself for as long as the screen remains in graphics mode.
+menu clear
+menu background splash.png
+menu title WangXinKun1.0
+menu vshift 8
+menu rows 18
+menu margin 8
+#menu hidden
+menu helpmsgrow 15
+menu tabmsgrow 13
+
+# Border Area
+menu color border * #00000000 #00000000 none
+
+# Selected item
+menu color sel 0 #ffffffff #00000000 none
+
+# Title bar
+menu color title 0 #ff7ba3d0 #00000000 none
+
+# Press [Tab] message
+menu color tabmsg 0 #ff3a6496 #00000000 none
+
+# Unselected menu item
+menu color unsel 0 #84b8ffff #00000000 none
+
+# Selected hotkey
+menu color hotsel 0 #84b8ffff #00000000 none
+
+# Unselected hotkey
+menu color hotkey 0 #ffffffff #00000000 none
+
+# Help text
+menu color help 0 #ffffffff #00000000 none
+
+# A scrollbar of some type? Not sure.
+menu color scrollbar 0 #ffffffff #ff355594 none
+
+# Timeout msg
+menu color timeout 0 #ffffffff #00000000 none
+menu color timeout_msg 0 #ffffffff #00000000 none
+
+# Command prompt text
+menu color cmdmark 0 #84b8ffff #00000000 none
+menu color cmdline 0 #ffffffff #00000000 none
+
+# Do not display the actual menu unless the user presses a key. All that is displayed is a timeout message.
+
+menu tabmsg Press Tab for full configuration options on menu items.
+
+menu separator # insert an empty line
+menu separator # insert an empty line
+
+label linux
+  menu label ^Install CentOS 7
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img ks=http://192.168.4.7/ks.cfg"  > pxelinux.cfg/default   &&  echo -e "*              III.TFTP服务---------------------\033[33m[ready$a]\033[0m                  *"
+yum -y install dhcp &>/dev/null
+rpm -q dhcp &>/dev/null  &&
+echo '#
+# DHCP Server Configuration file.
+#   see /usr/share/doc/dhcp*/dhcpd.conf.example
+#   see dhcpd.conf(5) man page
+#
+subnet 192.168.4.0 netmask 255.255.255.0 {
+    range 192.168.4.100 192.168.4.200;
+    option domain-name-servers 192.168.4.7;
+    option routers 192.168.4.254;
+    default-lease-time 600;
+    max-lease-time 7200;
+    next-server 192.168.4.7;
+    filename "pxelinux.0";
+}' > /etc/dhcp/dhcpd.conf   &&  echo -e "*              IV.DHCP服务----------------------\033[33m[ready$a]\033[0m                  *"
+ if [ $? -eq 0 ];then
+   systemctl restart httpd  || echo -e "\033[31mNo\033[0m"  && echo -e "*                    \033[35mHttpd.service up Successfully$a\033[0m                       *"
+        systemctl enable httpd &>/dev/null 
+   systemctl restart tftp   || echo -e "\033[31mNo\033[0m"  && echo -e "*                    \033[35mTftp.service  up Successfully$a\033[0m                       *"
+        systemctl enable tftp  &>/dev/null 
+   systemctl restart dhcpd  || echo -e "\033[31mNo\033[0m"  && echo -e "*                    \033[35mDhcpd.service up Successfully$a\033[0m                       *"
+        systemctl enable dhcpd &>/dev/null
+
+                                            echo -e "*                    \033[33mAll Service up Successfully$a$a\033[0m                        *"
+else
+                                            echo -e "\033[31mError 604:Failed.Service$a$a$a\033[0m" >&2 
+         exit 1
+fi 
+echo    "*                    --------配置部署完成  ！--------                     *"
+echo    "============================期待您的再次使用！！=========================== "

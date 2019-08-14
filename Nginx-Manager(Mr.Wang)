@@ -1,0 +1,31 @@
+#!/bin/bash
+#!/bin/bash
+#===========================================================================
+#           FileName: Nginx-Manager
+#
+#           Auother : WangXinKun
+#
+#           Created : 11:09,02/08/2019
+#===========================================================================
+a=!
+case $1 in
+start|st)
+          /usr/local/nginx/sbin/nginx ;;
+stop)
+          /usr/local/nginx/sbin/nginx -s stop ;;
+restart|re)
+          /usr/local/nginx/sbin/nginx -s stop
+          /usr/local/nginx/sbin/nginx ;;
+stat)
+          netstat -ntlup | grep -q nginx   #不输出
+    if [ $? -eq 0 ]
+          then
+              echo -e "\033[33mSuccessfully$a\033[0m"
+          else
+              echo -e "\033[31mFailed$a\033[0m"
+    fi
+;;
+*)
+              echo -e "\033[35mhelp:start|st,stop,restart|re,stat\033[0m" ;;
+esac
+

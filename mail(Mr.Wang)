@@ -1,0 +1,16 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: mail.sh
+#
+#           Auother : WangXinKun
+#
+#           Created : 13:31,31/07/2019
+#===========================================================================
+ps aux | wc -l &> n
+for a in $(cat n)
+do
+ if [ $a -ge 100 ];then
+   echo "wowowowo" | mail -s 'ssss' student
+ fi
+done
+

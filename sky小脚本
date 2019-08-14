@@ -1,0 +1,20 @@
+#!/bin/bash
+#==================================================================================================
+#=
+#=                            filename:autouseradd
+#=                              author:WangXinkun
+#=                             created:25/06/2019
+#=
+#==================================================================================================
+i=$( hostname)
+echo '-----------------------------------------------'
+echo "|||||hello,$i！"
+echo "|||||today is" `date`
+json=`curl -s http://www.weather.com.cn/weather1d/101010100.shtml`
+#echo $json
+city=`echo $json | sed 's/.*city":"//g'| sed 's/","cityid.*$//g'`
+temp=`echo $json | sed 's/.*temp":"//g'| sed 's/","WD.*$//g'`
+wd=`echo $json | sed 's/.*WD":"//g'| sed 's/","WS.*$//g'`
+ws=`echo $json | sed 's/.*WS":"//g'| sed 's/","SD.*$//g'`
+echo '|||||Have a good time!'
+echo '-----------------------------------------------'                                                        

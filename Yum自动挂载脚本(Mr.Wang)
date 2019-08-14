@@ -1,0 +1,21 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: Yumauto.sh
+#
+#           Auother : WangXinKun
+#
+#           Created : 17:31,31/07/2019
+#===========================================================================
+a=!
+rm -rf /etc/yum.repos.d/*
+if [ $? -eq 0  ];then
+echo '[wxk]
+name=Centos7
+baseurl="ftp://192.168.4.254/centos-1804"
+gpgcheck=0
+enabled=1
+'> /etc/yum.repos.d/wxk.repo
+yum repolist
+else
+   echo -e "\033[31merror 401:Mount Failed$a"
+fi

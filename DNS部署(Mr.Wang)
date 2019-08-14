@@ -1,0 +1,91 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: DNS Server.aotu
+#
+#           Auother : WangXinKun
+#
+#           Created : 17:22,31/07/2019
+#===========================================================================
+a=!
+yum -y install bind-chroot bind &>/dev/null
+rpm -q bind-chroot bind &>/dev/null &&
+echo 'options {
+    directory "/var/named";
+    recursion yes;
+};
+view  "wxk" {
+     match-clients { 192.168.4.7;127.0.0.1; };
+      zone "qq.com" IN {
+             type master;
+             file "qq.com.zone";
+ };
+      zone "163.com" IN {
+             type master;
+             file "163.com.zone";
+ };
+};
+view  "wxk.ohter" {
+     match-clients { any; };
+      zone "qq.com" IN {
+             type master;
+             file "qq.com.other";
+ };
+      zone "163.com" IN {
+             type master;
+             file "163.com.other";
+ };
+};' > /etc/named.conf
+cd /var/named/ &&
+cp -p named.localhost  qq.com.zone 
+cp -p named.localhost  qq.com.other 
+cp -p named.localhost  163.com.zone
+cp -p named.localhost  163.com.other &&
+echo '$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+qq.com.         NS      svr7
+svr7            A       192.168.4.7
+www             A       192.168.4.10
+' > qq.com.zone
+echo '$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+qq.com.         NS      svr7
+svr7            A       192.168.4.7
+www             A       192.168.4.20
+' > qq.com.other
+echo '$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+163.com.        NS      svr7
+svr7            A       192.168.4.7
+www             A       192.168.4.10
+' > 163.com.zone
+echo '$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+163.com.        NS      svr7
+svr7            A       192.168.4.7
+www             A       192.168.4.20
+' > 163.com.other &&
+echo 'nameserver 192.168.4.7' > /etc/resolv.conf &&
+systemctl restart named || echo -e "\033[31mNo\033[0m" && echo -e "\033[33mNamed.service up Successfully$a"
+systemctl enable  named &>/dev/null &&
+echo -e "\033[35mDNS服务端部署完成$a\033[0m"
+

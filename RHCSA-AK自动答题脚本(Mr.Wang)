@@ -1,0 +1,287 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: RHCSA-AK.aotu
+#
+#           Auother : WangXinKun
+#
+#           Created : 17:22,01/08/2019
+#===========================================================================
+#说明:想拿满分再添加一块盘并且手动用fdisk分swap分区否则只有290分
+cecho () {
+echo -e  "                  |  \033[1;32mC\033[0m    \033[1;33mS\033[0m    \033[1;35mD\033[0m    \033[1;36mN\033[0m    \E[1;35m阿\033[0m    \033[1;34m坤\033[0m     |"
+}
+
+echo     '                                 .-"""-.                '
+echo     "                                / .===. \               "
+echo     "                                \/ 6 6 \/               "
+echo     "                                ( \___/ )               "
+echo     "                   _________ooo__\_____/_____________   "
+echo     "                  /                                  \  "
+                                            cecho
+echo     "                  \_______________________ooo________/  "
+echo     "                                 |  |  |                "
+echo     "                                 |_ | _|                "
+echo     "                                 |  |  |                "
+echo     "                                 |__|__|                "
+echo     "                                 /-'Y'-\                "
+echo     "                                (__/ \__)               "
+
+m=！
+echo    "=====================Oo欢迎使用阿坤脚本,祝您使用愉快oO==========================="
+echo -e "*                        \033[36mOoRHCSA-AK自动答题开始oO\033[0m                               *"
+#配置主机名与ip:
+hostnamectl set-hostname server0.example.com
+hostname &> 1
+for a in $(cat 1)
+do
+   nmcli connection modify 'System eth0' ipv4.method manual ipv4.addresses '172.25.0.11/24 172.25.0.254' ipv4.dns 172.25.254.254 connection.autoconnect yes
+done
+nmcli connection up 'System eth0' &>/dev/null
+if [ $? -eq 0 ]
+   then
+       echo -e "*                   \033[34m01.\033[0m\033[35mIP     Service  set Successfully$m\033[0m                        *"
+   else
+       echo -e "\033[31mError 0:IP.service set Failed$m\033[0m"
+fi
+#配置Yum源:
+if [ $? -eq 0 ];then
+    rm -rf /etc/yum.repos.d/*
+    yum-config-manager --add  http://content.example.com/rhel7.0/x86_64/dvd &>/dev/null
+        echo "gpgcheck=0" >>  /etc/yum.repos.d/content.example.com_rhel7.0_x86_64_dvd.repo
+else 
+        echo -e "\033[31mError 1:Yum.service set Failed$m\033[0m"
+fi
+yum repolist &>/dev/null 
+yum -y  install xeyes &>/dev/null &&  echo -e "*                   \033[34m02.\033[0m\033[35mYum    Service  set Successfully$m\033[0m                        *"
+#配置swap分区及其他分区:
+if [ $? -eq 0 ];then
+  parted /dev/vdb <<EOF &> /dev/null 
+mklabel gpt
+mkpart
+swap
+linux-swap
+0
+800
+mkpart
+wxk2
+ext3
+800
+1800
+mkpart
+wxk3
+ext3
+1800
+2800
+q
+EOF
+#         vgcreate -s 1M swapvg /dev/vdb1      &>/dev/null
+#         lvcreate -l 512 -n swapvo swapvg     &>/dev/null
+#         mkswap /dev/swapvg/swapvo            &>/dev/null
+         
+#      echo "/dev/swapvg/swapvo swap swap defaults 0 0"                 >> /etc/fstab
+#swapon -a &>/dev/null &&
+         mkdir /mnt/database
+         vgcreate -s 16M datastore /dev/vdb3  &>/dev/null
+         lvcreate -l 50 -n database datastore &>/dev/null
+         mkfs.ext3  /dev/datastore/database   &>/dev/null
+       
+      echo "/dev/datastore/database /mnt/database ext3 defaults 0 0"   >> /etc/fstab
+mount -a  &>/dev/null &&
+         mkdir /vo
+         vgcreate systemvg /dev/vdb2          &>/dev/null
+         lvcreate -L 200M -n vo systemvg      &>/dev/null
+         mkfs.ext3 /dev/systemvg/vo           &>/dev/null
+         lvextend -L 300M /dev/systemvg/vo    &>/dev/null
+         resize2fs /dev/systemvg/vo           &>/dev/null
+
+      echo "/dev/systemvg/vo /vo ext3 defaults 0 0"                    >> /etc/fstab
+mount -a  &>/dev/null
+else
+      echo -e "\033[31mError 2:Parted.service set Failed$m\033[0m"
+fi
+mount -a &>/dev/null &&
+      echo -e "*                   \033[34m03.\033[0m\033[35mParted Service  set Successfully$m\033[0m                        *"
+#创建用户及分组:
+if [ $? -eq  0 ]
+ then
+    groupadd adminuser
+      useradd -G adminuser natasha
+      useradd -G adminuser harry
+      useradd -s /sbin/nologin sarah
+           echo flectrag | passwd --stdin natasha     &>/dev/null
+           echo flectrag | passwd --stdin harry       &>/dev/null
+           echo flectrag | passwd --stdin sarah       &>/dev/null
+else
+      echo -e "\033[31mError 3:Useradd and Groupadd Service sets Failed$m\033[0m"
+fi
+      echo "natasha harry sarah" > userlist
+for i in $(cat userlist)
+do
+    if [ ! -e /home/$i ]
+      then
+          killall rhtcsa-ca.sh
+      exit 604
+    fi
+done
+id natasha &>/dev/null &&
+       id harry &>/dev/null &&
+             id sarah &>/dev/null &&
+       cp  /etc/fstab  /var/tmp/fstab &&  #配置/var/tmp/fstab的权限 
+     setfacl -m u:natasha:rwx /var/tmp/fstab &&
+setfacl -m u:harry:- /var/tmp/fstab&&
+      echo -e "*                   \033[34m04.\033[0m\033[35mUGadd  Service  set Successfully$m\033[0m                        *"
+#配置一个cron任务:
+if [ $? -eq 0 ]
+  then
+                                                           systemctl restart crond
+      echo "23 14 * * * natasha /bin/echo hiya" >> /etc/crontab;                      systemctl restart crond
+                                                           systemctl enable  crond
+      echo -e "*                   \033[34m05.\033[0m\033[35mCrond  Service  set Successfully$m\033[0m                        *"
+  else
+      echo -e "\033[31mError 4: Crond.service set Failed$m\033[0m"
+fi
+#创建一个共享目录:
+if [ $? -eq 0 ]
+  then
+     mkdir /home/admins
+     chown :adminuser /home/admins
+     chmod 2770 /home/admins
+      echo -e "*                   \033[34m06.\033[0m\033[35mSBit   Service  set Successfully$m\033[0m                        *"
+  else
+      echo -e "\033[31mError 5: Sticky Bit Service set Failed$m\033[0m"
+fi
+#绑定到外部验证服务:
+if [ $? -eq 0 ];then
+yum -y install sssd  &> /dev/null
+rpm -q sssd &>/dev/null &&
+authconfig \
+--enableldap \
+--enablekrb5 \
+--disableldapauth \
+--enableldaptls \
+--ldapserver="classroom.example.com" \
+--ldapbasedn="dc=example,dc=com" \
+--ldaploadcacert=http://172.25.254.254/pub/example-ca.crt \
+--krb5realm="EXAMPLE.COM" \
+--krb5kdc="classroom.example.com" \
+--krb5adminserver="classroom.example.com" \
+--update
+   else
+       echo -e "\033[31mError 6: LDAP.service set Failed$m\033[0m"
+fi
+systemctl restart sssd &>/dev/null && echo -e "*                   \033[34m07.\033[0m\033[35mLDAP   Service  set Successfully$m\033[0m                        *" || 
+         echo -e "\033[31mError 6: LDAP.service set Failed$m\033[0m" 
+systemctl enable  sssd &>/dev/null &&
+#autofs配置:
+mkdir  /home/guests &&
+if [ $? -eq 0 ]
+  then
+      yum -y install autofs &>/dev/null
+      rpm -q autofs &>/dev/null &&
+         echo "/home/guests /etc/auto.ldap" >>/etc/auto.master
+         echo "* 172.25.254.254:/home/guests/&">>/etc/auto.ldap
+fi
+systemctl restart autofs &>/dev/null && echo -e "*                   \033[34m08.\033[0m\033[35mAutofs Service  set Successfully$m\033[0m                        *" || 
+         echo -e "\033[31mError 7: Autofs.service set Failed$m\033[0m" 
+systemctl enable  autofs &>/dev/null &&
+#配置NTP网络时间客户端:
+if [ $? -eq 0 ]
+  then
+       echo "# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+#server 0.rhel.pool.ntp.org iburst
+#server 1.rhel.pool.ntp.org iburst
+#server 2.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst
+server classroom.example.com iburst
+# Ignore stratum in source selection.
+stratumweight 0
+
+# Record the rate at which the system clock gains/losses time.
+driftfile /var/lib/chrony/drift
+
+# Enable kernel RTC synchronization.
+rtcsync
+
+# In first three updates step the system clock instead of slew
+# if the adjustment is larger than 10 seconds.
+makestep 10 3
+
+# Allow NTP client access from local network.
+#allow 192.168/16
+
+# Listen for commands only on localhost.
+bindcmdaddress 127.0.0.1
+bindcmdaddress ::1
+
+# Serve time even if not synchronized to any NTP server.
+#local stratum 10
+
+keyfile /etc/chrony.keys
+
+# Specify the key used as password for chronyc.
+commandkey 1
+
+# Generate command key if missing.
+generatecommandkey
+
+# Disable logging of client accesses.
+noclientlog
+
+# Send a message to syslog if a clock adjustment is larger than 0.5 seconds.
+logchange 0.5
+
+logdir /var/log/chrony
+#log measurements statistics tracking
+" > /etc/chrony.conf
+   else
+         echo -e "\033[31mError 8: NTP.service set Failed$m\033[0m"
+fi
+systemctl restart chronyd &>/dev/null && echo -e "*                   \033[34m09.\033[0m\033[35mNTP    Service  set Successfully$m\033[0m                        *" || 
+         echo -e "\033[31mError 8: NTP.service set Failed$m\033[0m"
+systemctl enable  chronyd &>/dev/null &&
+#查找文件:
+if [ $? -eq 0 ]
+  then
+      mkdir /root/findfiles
+      find / -user student -type f -exec cp -p {} /root/findfiles/ \; &>/dev/null
+  else
+       echo -e "\033[31mError 9: Find.service set Failed$m\033[0m"
+fi
+if [ $? -eq 0 ]
+   then
+     echo -e "*                   \033[34m10.\033[0m\033[35mFind   Service  set Successfully$m\033[0m                        *"
+   else
+       break
+fi
+#配置一个用户账户:
+useradd -u 3456 alex;echo 'flectrag' | passwd --stdin alex &>/dev/null &&
+if [ $? -eq 0 ]
+  then
+      if [ ! -e /home/alex ]
+        then
+             continue
+        echo -e "\033[31mError 10: Useradd.service set Failed$m\033[0m"
+      fi
+  else
+        echo -e "*                   \033[34m11.\033[0m\033[35mUser   Service  set Successfully$m\033[0m                        *"
+fi
+#查找字符串:
+grep 'seismic' /usr/share/dict/words  > /root/wordlist && echo -e "*                   \033[34m12.\033[0m\033[35mGrep   Service  set Successfully$m\033[0m                        *" || 
+        echo -e "\033[31mError 11: Grep.service set Failed$m\033[0m"
+#创建一个归档:
+tar Pcjf /root/backup.tar.bz2 /usr/local/ && echo -e "*                   \033[34m13.\033[0m\033[35mTar    Service  set Successfully$m\033[0m                        *" || 
+        echo -e "\033[31mError 12: Tar.service set Failed$m\033[0m"
+#安装内核升级:
+if [ $? -eq 0 ]
+  then
+      wget http://classroom.example.com/content/rhel7.0/x86_64/errata/Packages/kernel-3.10.0-123.1.2.el7.x86_64.rpm  &>/dev/null
+  else
+       echo -e "\033[31mError 13: Kernelupdate.service set Failed$m\033[0m"
+fi
+rpm -ivh kernel-3.10.0-123.1.2.el7.x86_64.rpm &>/dev/null && echo -e "*                   \033[34m14.\033[0m\033[35mKernel Service  set Successfully$m\033[0m                        *"
+echo    "*                 --------------自动答题完成!---------------                    *"
+echo    "==============================期待您的再次使用！！==============================="
+echo "5秒后重启$m"
+sleep 5
+reboot
