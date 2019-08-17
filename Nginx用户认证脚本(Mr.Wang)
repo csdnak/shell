@@ -1,0 +1,41 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: httpd-tools.sh
+#
+#           Author  : WangXinKun
+#
+#           Created : 13:08,17/08/2019
+#===========================================================================
+a=!
+file=/root/lnmp_soft/vpn/
+ip=192.168.4.5
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$a\033[0m"
+}
+b=`yum repolist | grep 'repolist' | awk '{print $2}' | sed 's/,//'`
+if [ $b -gt 500 ]
+  then
+      /usr/local/nginx/sbin/nginx -s stop &>/dev/null
+      /usr/local/nginx/sbin/nginx         &>/dev/null&&
+      if [ $? -eq 0 ]
+         then
+       yum -y install httpd-tools &>/dev/null
+       rpm -q httpd-tools         &>/dev/null&&
+        if [ $? -eq 0 ]
+           then
+               sed -i '37a auth_basic_user_file "/usr/local/nginx/pass";' /usr/local/nginx/conf/nginx.conf
+               sed -i '37a auth_basic "input password: ";' /usr/local/nginx/conf/nginx.conf
+           read -p "Name: " name
+               htpasswd -c /usr/local/nginx/pass $name
+           else
+                  cecho  31 Error 500:  httpd-tools Service install Failed
+        fi
+/usr/local/nginx/sbin/nginx -s reload     &>/dev/null&& cecho  35 Configuretion Info:  httpd-tools Service install Successfully ||
+                                        cecho  31 Error 500: httpd-tools Service install Failed
+
+           else
+                        cecho  33 Error 500:  Please install nginx Service
+      fi
+else
+           cecho  33 Error 500:  Please install Yum Service
+fi

@@ -1,0 +1,35 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: NTP
+#
+#           Author  : WangXinKun
+#
+#           Created : 21:03,16/08/2019
+#===========================================================================
+a=!
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$c\033[0m"
+}
+b=`yum repolist | grep 'repolist' | awk '{print $2}' | sed 's/,//'`
+read -p "请输入服务器ip: " ip
+read -p "请输入所允许的网段: " ip2
+#sleep 2
+if [ $b -gt 500 ]
+  then
+      yum -y install chrony &>/dev/null
+      rpm -q chrony         &>/dev/null&&
+	if [ $? -eq 0 ]
+   	then
+          
+          sed -i "s/gateway/$ip/" /etc/chrony.conf
+          sed -i 's/#local stratum 10/local stratum 10/' /etc/chrony.conf
+          echo "allow $ip2/24" >> /etc/chrony.conf
+      else
+          cecho  31 Error 500:  NTP Service install Failed
+      fi
+systemctl restart chronyd &>/dev/null && cecho  35 Configuretion Info:  NTP Service install Successfully ||
+          cecho  31 Error 500:  NTP Service install Failed
+systemctl enable  chronyd &>/dev/null
+else
+    cecho  33 Error 500:  Please install Yum Service
+fi

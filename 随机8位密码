@@ -1,0 +1,21 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: RANDOM-password
+#
+#           Auother : WangXinKun
+#
+#           Created : 17:22,31/07/2019
+#===========================================================================
+x=abcdefghigklmnopqrstuvwxyzQWERTYUIOPASDFGHJKLMNBVCXZ0123456789
+
+pass=
+
+for i in {1..8}
+do
+ n=$[RANDOM%62]
+ pass1=${x:n:1}
+ pass=$pass$pass1
+done
+
+echo $pass
+

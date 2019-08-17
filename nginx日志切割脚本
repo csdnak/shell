@@ -1,0 +1,14 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: logbak.sh
+#
+#           Auother : WangXinKun
+#
+#           Created : 11:05,12/08/2019
+#===========================================================================
+#切割日志脚本 与cron计划任务一起用
+date=`date +%Y%m%d`
+logpath=/usr/local/nginx/logs
+mv $logpath/access.log $logpath/access-$date.log
+mv $logpath/error.log  $logpath/error-$date.log
+kill -USR1 $(cat $logpath/nginx.pid) #也可以用kill -10

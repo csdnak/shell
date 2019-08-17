@@ -2,11 +2,11 @@
 #===========================================================================
 #           FileName: RHCSA-AK.aotu
 #
-#           Auother : WangXinKun
+#           Author  : WangXinKun
 #
 #           Created : 17:22,01/08/2019
 #===========================================================================
-#说明:想拿满分再添加一块盘并且手动用fdisk分swap分区否则只有290分
+#说明:用前需手动添加一块虚拟磁盘(列:vdc)否则swap分区检测会失败!
 cecho () {
 echo -e  "                  |  \033[1;32mC\033[0m    \033[1;33mS\033[0m    \033[1;35mD\033[0m    \033[1;36mN\033[0m    \E[1;35m阿\033[0m    \033[1;34m坤\033[0m     |"
 }
@@ -58,30 +58,34 @@ if [ $? -eq 0 ];then
   parted /dev/vdb <<EOF &> /dev/null 
 mklabel gpt
 mkpart
-swap
-linux-swap
-0
-800
-mkpart
-wxk2
+wxk1
 ext3
-800
+0
 1800
 mkpart
-wxk3
+wxk2
 ext3
 1800
 2800
 q
 EOF
-#         vgcreate -s 1M swapvg /dev/vdb1      &>/dev/null
-#         lvcreate -l 512 -n swapvo swapvg     &>/dev/null
-#         mkswap /dev/swapvg/swapvo            &>/dev/null
+  parted /dev/vdc <<EOF &>/dev/null
+mktable gpt
+mkpart
+swap
+linux-swap
+0
+800
+q
+EOF
+         vgcreate -s 1M swapvg /dev/vdc1      &>/dev/null
+         lvcreate -l 512 -n swapvo swapvg     &>/dev/null
+         mkswap /dev/swapvg/swapvo            &>/dev/null
          
-#      echo "/dev/swapvg/swapvo swap swap defaults 0 0"                 >> /etc/fstab
-#swapon -a &>/dev/null &&
+      echo "/dev/swapvg/swapvo swap swap defaults 0 0"                 >> /etc/fstab
+swapon -a &>/dev/null &&
          mkdir /mnt/database
-         vgcreate -s 16M datastore /dev/vdb3  &>/dev/null
+         vgcreate -s 16M datastore /dev/vdb1  &>/dev/null
          lvcreate -l 50 -n database datastore &>/dev/null
          mkfs.ext3  /dev/datastore/database   &>/dev/null
        
@@ -119,7 +123,7 @@ for i in $(cat userlist)
 do
     if [ ! -e /home/$i ]
       then
-          killall rhtcsa-ca.sh
+          killall RHCSA-AK.sh
       exit 604
     fi
 done

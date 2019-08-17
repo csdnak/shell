@@ -1,0 +1,146 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: LNMP Server.aotu
+#
+#           Auother : WangXinKun
+#
+#           Created : 15:14,12/08/2019
+#===========================================================================
+a=!
+file=/usr/local/nginx/conf/nginx.conf
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$a\033[0m"
+}
+b=`yum repolist | grep 'repolist' | awk '{print $2}' | sed 's/,//'`
+if [ $b -gt 500 ]
+  then
+#Web1:
+yum -y install gcc  openssl-devel pcre-devel &>/dev/null
+tar xf lnmp_soft.tar.gz
+cd lnmp_soft/ &&
+scp nginx-1.12.2.tar.gz  /opt/
+rpm -q gcc openssl-devel pcre-devel &>/dev/null && 
+if [ $? -eq 0 ]
+  then
+      tar xf /opt/nginx-1.12.2.tar.gz -C /opt/
+  else
+       cecho  31 Error 604:  Nginx Service install Failed
+fi 
+cd /opt/nginx-1.12.2 &&
+./configure &>/dev/null \
+--prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-stream \
+--with-http_stub_status_module \
+--with-http_ssl_module
+make&&make install &>/dev/null
+sed -i '65,71s/#//' $file
+sed -i '/SCRIPT_FILENAME/d' $file
+sed -i '45s/index.html/index.php/' $file
+sed -i 's/fastcgi_params/fastcgi.conf/' $file
+echo "<?php
+echo '192.168.2.100';
+?>
+" > /usr/local/nginx/html/index.php
+useradd -s /sbin/nologin nginx
+/usr/local/nginx/sbin/nginx &>/dev/null
+if [ $? -eq 0 ]
+  then
+       cecho  33 Configuretion Info:  Nginx Service install Successfully
+  else
+       cecho  31 Error 604:  Nginx Service install Failed
+fi
+yum -y install mariadb  mariadb-server  mariadb-devel &>/dev/null
+rpm -q mariadb  mariadb-server  mariadb-devel &>/dev/null &&
+systemctl start  mariadb &>/dev/null && cecho  33 Configuretion Info:  Mysql Service install Successfully ||
+cecho  31 Error 604:  Mysql Service install Failed
+systemctl enable mariadb &>/dev/null 
+if [ $? -eq 0 ]
+  then
+      yum -y install php php-fpm php-mysql &>/dev/null
+      rpm -q php php-fpm php-mysql &>/dev/null &&
+      systemctl start  php-fpm &>/dev/null  && cecho  33 Configuretion Info:  PHP Service install Successfully
+      systemctl enable php-fpm &>/dev/null
+  else
+       cecho  31 Error 604:  PHP Service install Failed
+fi
+#钥匙:
+if [ $? -eq 0 ]
+  then
+     ssh-keygen <<EOF &>/dev/null
+
+
+
+EOF
+  else
+       cecho  31 Error 604:  ssh-key Service install Failed
+fi
+ssh-copy-id root@192.168.2.200 <<EOF &>/dev/null
+123
+EOF
+if [ $? -eq 0 ]
+  then
+       cecho  33 Configuretion Info:  ssh-key Service install Successfully
+  else
+       cecho  31 Error 604:  ssh-key Service install Failed
+fi
+#Web2:
+ssh root@192.168.2.200 <<EOF
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$a\033[0m"
+}
+yum -y install gcc  openssl-devel pcre-devel &>/dev/null
+tar xf lnmp_soft.tar.gz
+cd lnmp_soft/ &&
+scp nginx-1.12.2.tar.gz  /opt/
+rpm -q gcc openssl-devel pcre-devel &>/dev/null && 
+if [ $? -eq 0 ]
+  then
+      tar xf /opt/nginx-1.12.2.tar.gz -C /opt/
+  else
+       cecho  31 Error 604:  Nginx Service install Failed
+fi 
+cd /opt/nginx-1.12.2 &&
+./configure &>/dev/null \
+--prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-stream \
+--with-http_stub_status_module \
+--with-http_ssl_module
+make&&make install &>/dev/null
+sed -i '65,71s/#//' $file
+sed -i '/SCRIPT_FILENAME/d' $file
+sed -i '45s/index.html/index.php/' $file
+sed -i 's/fastcgi_params/fastcgi.conf/' $file
+echo "<?php
+echo '192.168.2.200';
+?>
+" > /usr/local/nginx/html/index.php
+useradd -s /sbin/nologin nginx
+/usr/local/nginx/sbin/nginx &>/dev/null &&
+if [ $? -eq 0 ]
+  then
+       cecho  33 Configuretion Info:  Nginx Service install Successfully
+  else
+       cecho  31 Error 604:  Nginx Service install Failed
+fi
+yum -y install mariadb  mariadb-server  mariadb-devel &>/dev/null
+rpm -q mariadb  mariadb-server  mariadb-devel &>/dev/null &&
+systemctl start  mariadb &>/dev/null && cecho  33 Configuretion Info:  Mysql Service install Successfully ||
+cecho  31 Error 604:  Mysql Service install Failed
+systemctl enable mariadb &>/dev/null 
+if [ $? -eq 0 ]
+  then
+      yum -y install php php-fpm php-mysql &>/dev/null
+      rpm -q php php-fpm php-mysql &>/dev/null &&
+      systemctl start  php-fpm &>/dev/null  && cecho  33 Configuretion Info:  PHP Service install Successfully
+      systemctl enable php-fpm &>/dev/null
+  else
+       cecho  31 Error 604:  PHP Service install Failed
+fi
+EOF
+else
+           cecho  33 Error 500:  Please install Yum Service
+fi

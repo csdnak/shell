@@ -1,0 +1,54 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: Nginx-ssl.sh
+#
+#           Author  : WangXinKun
+#
+#           Created : 15:32,17/08/2019
+#===========================================================================
+#请记得修改客户端/etc/hosts文件 以防访问失败
+a=!
+file=/usr/local/nginx/conf/nginx.conf
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$a\033[0m"
+}
+b=`yum repolist | grep 'repolist' | awk '{print $2}' | sed 's/,//'`
+if [ $b -gt 500 ]
+  then
+      /usr/local/nginx/sbin/nginx -s stop &>/dev/null
+      /usr/local/nginx/sbin/nginx         &>/dev/null&&
+      if [ $? -eq 0 ]
+         then
+             cd /usr/local/nginx/conf&&
+         read -p "请输入Web1: " web1
+             openssl genrsa > cert.key
+             openssl req -new -x509 -key cert.key > cert.pem
+             sed -i "37s/localhost/$web1/g" $file
+             sed -i '$s/}//g' $file&&
+         echo  "server {
+        listen       443 ssl;
+        server_name               $web1;
+        ssl_certificate      cert.pem;
+        ssl_certificate_key  cert.key;
+
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+}" >> $file
+/usr/local/nginx/sbin/nginx -s reload   &>/dev/null && cecho  35 Configuretion Info:  Nginx-ssl Service install Successfully ||
+                                        cecho  31 Error 500: Nginx-ssl Service install Failed
+
+         else
+                        cecho  33 Error 500:  Please install nginx Service
+      fi
+else
+           cecho  33 Error 500:  Please install Yum Service
+fi

@@ -1,0 +1,106 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: GRE.VPN
+#
+#           Author  : WangXinKun
+#
+#           Created : 18:35,16/08/2019
+#===========================================================================
+#client
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$c\033[0m"
+}
+a=!
+peer=201.1.2.5
+local=201.1.2.10
+inet=10.10.10.10
+peer1=10.10.10.5
+modprobe ip_gre
+lsmod |grep ip_gre &>/dev/null
+if [ $? -eq 0 ]
+   then
+      ip tunnel add tun0 mode gre remote 201.1.2.5 local 201.1.2.10
+      ip link set tun0 up
+      l=`ip a s tun0 |grep link |awk '{print $2}'`
+      p=`ip a s tun0 |grep link |awk '{print $4}'`
+         if [ $l = $local ]
+            then
+                cecho  35 Configuretion Info:  Local Service install Successfully
+            else
+                cecho  31 Error 500:  Local Service install Failed
+         fi
+             if [ $p = $peer ]
+                then
+                    cecho  35 Configuretion Info:  peer Service install Successfully
+                else
+                    cecho  31 Error 500:  peer Service install Failed
+             fi
+      ip addr add 10.10.10.10/24 peer 10.10.10.5/24 dev tun0
+      i=`ip a s tun0 |grep inet |awk '{print $2}'`
+      p1=`ip a s tun0 |grep inet |awk '{print $4}'|awk -F/ '{print $1}'`
+          if [ $i = $inet ]
+            then
+                cecho  35 Configuretion Info:  inet Service install Successfully
+            else
+                cecho  31 Error 500:  inet Service install Failed
+         fi
+             if [ $p1 = $peer1 ]
+                then
+                    cecho  35 Configuretion Info:  peer1 Service install Successfully&&
+                    cecho  35 Configuretion Info:  GRE Service install Successfully
+                else
+                    cecho  31 Error 500:  peer1 Service install Failed
+             fi
+   else
+                    cecho  31 Error 500:  GRE Service install Failed
+fi
+#proxy
+ssh root@201.1.2.5 <<EOF
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$c\033[0m"
+}
+a=!
+peer=201.1.2.10
+local=201.1.2.5
+inet=10.10.10.5
+peer1=10.10.10.10
+modprobe ip_gre
+lsmod |grep ip_gre &>/dev/null
+if [ $? -eq 0 ]
+   then
+      ip tunnel add tun0 mode gre remote $peer local $local
+      ip link set tun0 up
+      l=`ip a s tun0 |grep link |awk '{print $2}'`
+      p=`ip a s tun0 |grep link |awk '{print $4}'`
+         if [ $l = $local ]
+            then
+                cecho  35 Configuretion Info:  Local Service install Successfully
+            else
+                cecho  31 Error 500:  Local Service install Failed
+         fi
+             if [ $p = $peer ]
+                then
+                    cecho  35 Configuretion Info:  peer Service install Successfully
+                else
+                    cecho  31 Error 500:  peer Service install Failed
+             fi
+      ip addr add $inet/24 peer $peer1/24 dev tun0
+      i=`ip a s tun0 |grep inet |awk '{print $2}'`
+      p1=`ip a s tun0 |grep inet |awk '{print $4}'|awk -F/ '{print $1}'`
+          if [ $i = $inet ]
+            then
+                cecho  35 Configuretion Info:  inet Service install Successfully
+            else
+                cecho  31 Error 500:  inet Service install Failed
+         fi
+             if [ $p1 = $peer1 ]
+                then
+                    cecho  35 Configuretion Info:  peer1 Service install Successfully&&
+                    cecho  35 Configuretion Info:  GRE Service install Successfully
+                else
+                    cecho  31 Error 500:  peer1 Service install Failed
+             fi
+   else
+                    cecho  31 Error 500:  GRE Service install Failed
+fi
+EOF

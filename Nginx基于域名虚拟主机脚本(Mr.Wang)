@@ -1,0 +1,47 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: Nginx域名服务器
+#
+#           Author  : WangXinKun
+#
+#           Created : 14:00,17/08/2019
+#===========================================================================
+#记得修改客户机/etc/hosts以免访问失败
+a=!
+file=/usr/local/nginx/conf/nginx.conf
+cecho () {
+    echo -e "\033[$1m$2 $3 $4 $5 $6 $7$a\033[0m"
+}
+b=`yum repolist | grep 'repolist' | awk '{print $2}' | sed 's/,//'`
+if [ $b -gt 500 ]
+  then
+      /usr/local/nginx/sbin/nginx -s stop &>/dev/null
+      /usr/local/nginx/sbin/nginx         &>/dev/null&&
+      if [ $? -eq 0 ]
+         then
+       read -p "请输入Web1: " web1
+             sed -i "37s/localhost/$web1/g" $file
+             sed -i '$s/}//g' $file&&
+       read -p "请输入Web2: " web2
+       read -p "请输入Webroot: " webroot
+         echo  " server {
+        listen  80;
+        server_name  $web2;
+location / { 
+root   $webroot;
+index  index.html index.htm;
+  }
+ }
+}" >> $file
+             mkdir /usr/local/nginx/$webroot && echo "$webroot" > /usr/local/nginx/$webroot/index.html
+
+      
+/usr/local/nginx/sbin/nginx -s reload   &>/dev/null && cecho  35 Configuretion Info:  Nginx域名 Service install Successfully ||
+                                        cecho  31 Error 500: Nginx域名 Service install Failed
+
+          else
+                        cecho  33 Error 500:  Please install nginx Service
+      fi
+else
+           cecho  33 Error 500:  Please install Yum Service
+fi

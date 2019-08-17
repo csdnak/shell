@@ -1,0 +1,28 @@
+#!/bin/bash
+#===========================================================================
+#           FileName: MyWeekday
+#
+#           Author  : WangXinKun
+#
+#           Created : 18:35,14/08/2019
+#===========================================================================
+#500为系统内部错误(在本脚本寓意为脚本语法错误)
+I="O(∩_∩ )O"
+O="/(ㄒoㄒ)/~~"
+my=
+hotfix=bug
+weekday=MyWeekday
+number=52
+n=$[RANDOM%2]
+num=${number:n:1}
+bug=`echo $num | sed -n  '/5/s/$/00/p'`
+if [ "$bug" = "500" ]
+  then
+     let  my+=hotfix #= $(weekday)
+     my=$I
+     echo -e "\E[35m$weekday$my\033[0m"
+  else
+     my=otherのweekday
+     echo -e "\033[31m$my$O\033[0m"
+fi
+

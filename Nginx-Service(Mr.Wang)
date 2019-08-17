@@ -7,27 +7,41 @@
 #           Created : 17:22,31/07/2019
 #===========================================================================
 a=!
+b=`yum repolist |grep repolist |awk '{print $2}' |sed -n 's/,//p'`
 cecho () {
     echo -e "\033[$1m$2 $3 $4 $5 $6 $7$a\033[0m"
 }
-yum -y install gcc  openssl-devel pcre-devel &>/dev/null
-tar xf /lnmp_soft.tar.gz
-cd lnmp_soft/ &&
-scp nginx-1.10.3.tar.gz  /opt/
-rpm -q gcc openssl-devel pcre-devel &>/dev/null && 
-if [ $? -eq 0 ]
-  then
-      tar xf /opt/nginx-1.10.3.tar.gz -C /opt/
-  else
-       cecho  31 Error 604:  Nginx Service install Failed
-fi 
-cd /opt/nginx-1.10.3 &&
-./configure   &>/dev/null
-make          &>/dev/null
-make install  &>/dev/null
+if [ $b -gt 500 ]
+   then
+      yum -y install gcc  openssl-devel pcre-devel &>/dev/null
+   tar xf lnmp_soft.tar.gz
+   cd lnmp_soft/ &&
+   scp nginx-1.12.2.tar.gz  /opt/
+      rpm -q gcc openssl-devel pcre-devel &>/dev/null && 
+	if [ $? -eq 0 ]
+  	   then
+      	tar xf /opt/nginx-1.12.2.tar.gz -C /opt/
+  	   else
+       	cecho  31 Error 604:  Nginx Service install Failed
+	fi 
+	cd /opt/nginx-1.12.2 &&
+./configure &>/dev/null \
+--prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-stream \
+--with-http_stub_status_module \
+--with-http_ssl_module
+	make&&make install
+             useradd -s /sbin/nologin nginx&&
+		/usr/local/nginx/sbin/nginx &>/dev/null &&
+		/usr/local/nginx/sbin/nginx -s reload &>/dev/null  
 if [ $? -eq 0 ]
   then
        cecho  33 Configuretion Info:  Nginx Service install Successfully
   else
        cecho  31 Error 604:  Nginx Service install Failed
+fi
+   else
+       cecho  33 Error 500:  Please install Yum Service
 fi

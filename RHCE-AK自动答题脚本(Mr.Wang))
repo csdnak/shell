@@ -2,14 +2,13 @@
 #===========================================================================
 #           FileName: RHCE-AK.auto
 #
-#           Auother : WangXinKun
+#           Author  : WangXinKun
 #
 #           Created : 11:07,03/08/2019
 #===========================================================================
-#说明:用前请打通墙壁(server0生成公钥及传输给desktop0私钥)双方请使用以下指令:
-#ssh-keygen(一路回车即可);ssh-copy-id root@172.25.0.xx(写对方ip)
+#说明:用前请打通墙壁(server0生成公钥及传输给desktop0私钥)请使用以下指令:
+#ssh-keygen(一路回车即可);ssh-copy-id root@172.25.0.xx(写desktop ip)
 #firewall-cmd --set-default-zone=trusted(两边都要打开,否则无法配置desktop0)
-#desktop0分区用fdisk
 cecho () {
 echo -e  "                  |  \033[1;32mC\033[0m    \033[1;33mS\033[0m    \033[1;35mD\033[0m    \033[1;36mN\033[0m    \E[1;35m阿\033[0m    \033[1;34m坤\033[0m     |"
 }
@@ -60,7 +59,7 @@ SELINUXTYPE=targeted
 grep "SELINUX=enforcing" /etc/selinux/config                                                         &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m01.\033[0m配置SELinux服务-----------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m01.\033[0m配置SELinux服务-----------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "配置SELinux服务------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -83,7 +82,7 @@ SELINUXTYPE=targeted
 grep "SELINUX=enforcing" /etc/selinux/config                                                         &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m01.\033[0m配置SELinux服务-----------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m01.\033[0m配置SELinux服务-----------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "配置SELinux服务------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -115,7 +114,7 @@ fi
 grep "172.34.0.0/24" /etc/firewalld/zones/block.xml &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m02.\033[0m配置SSH访问---------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m02.\033[0m配置SSH访问---------------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "配置SSH访问------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -131,7 +130,7 @@ fi
 grep "alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'" /etc/bashrc &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m03.\033[0m配置别名定义--------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m03.\033[0m配置别名定义--------------------------\033[33m[ OK$a]\033[0m                 *"
    else 
         echo -e "qstat别名定义------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -185,7 +184,7 @@ fi
 egrep "forward-port to-port=\"80\" protocol=\"tcp\" port=\"5423\"" /etc/firewalld/zones/trusted.xml  &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m04.\033[0m配置端口转发--------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m04.\033[0m配置端口转发--------------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "Firewall端口转发------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -229,7 +228,7 @@ fi
 nmcli connection up team0                                                                                                        &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m05.\033[0m配置链路聚合--------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m05.\033[0m配置链路聚合--------------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "Team0链路聚合------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -263,7 +262,7 @@ fi
 nmcli connection up 'System eth0'                                                                                                &>/dev/null
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m06.\033[0m配置IPv6地址--------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m06.\033[0m配置IPv6地址--------------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "配置IPv6地址------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -279,7 +278,7 @@ if [ $? -eq 0 ]
    else
        break
 fi
-systemctl restart postfix &>/dev/null && echo -e "*              \E[35m07.\033[0m配置mail服务--------------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart postfix &>/dev/null && echo -e "*              \E[35m07.\033[0m配置mail服务--------------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "配置mail服务------------------\033[31m[Failed$a]\033[0m"
 systemctl enable  postfix &>/dev/null &&
 #Samba发布共享目录:
@@ -319,7 +318,7 @@ systemctl restart smb &>/dev/null
 systemctl enable  smb &>/dev/null &&
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m08.\033[0m搭建Samba服务-------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m08.\033[0m搭建Samba服务-------------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "搭建Samba服务-----------------\033[31m[Failed$a]\033[0m"
 fi
@@ -337,7 +336,7 @@ mount -a
 EOF
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m09.\033[0m配置Samba多用户-----------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m09.\033[0m配置Samba多用户-----------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "配置Samba多用户------------------\033[31m[Failed$a]\033[0m"
 fi
@@ -355,7 +354,7 @@ if [ $? -eq 0 ]
    else
        break
 fi
-systemctl restart nfs-secure-server nfs-server &>/dev/null && echo -e "*              \E[35m10.\033[0m搭建NFS服务---------------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart nfs-secure-server nfs-server &>/dev/null && echo -e "*              \E[35m10.\033[0m搭建NFS服务---------------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "搭建NFS服务------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  nfs-secure-server nfs-server &>/dev/null
 #desktop0
@@ -376,7 +375,7 @@ mount -a                                                                        
 EOF
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m11.\033[0m挂载NFS服务---------------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m11.\033[0m挂载NFS服务---------------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "挂载NFS服务-----------------\033[31m[Failed$a]\033[0m"
 fi
@@ -393,7 +392,7 @@ DocumentRoot /var/www/html
    else
        break
 fi
-systemctl restart httpd &>/dev/null && echo -e "*              \E[35m12.\033[0m搭建Web服务---------------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m12.\033[0m搭建Web服务---------------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "搭建Web服务------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  httpd &>/dev/null &&
 #配置安全Web服务:
@@ -412,7 +411,7 @@ wget -O /etc/pki/tls/private/server0.key http://classroom.example.com/pub/tls/pr
   else
       break
 fi
-systemctl restart httpd &>/dev/null && echo -e "*              \E[35m13.\033[0m搭建Web.key服务-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m13.\033[0m搭建Web.key服务-----------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "搭建Web.key服务------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  httpd &>/dev/null
 #配置虚拟主机:
@@ -429,7 +428,7 @@ DocumentRoot /var/www/virtual
    else
        break
 fi
-systemctl restart httpd &>/dev/null && echo -e "*              \E[35m14.\033[0m搭建Web.virtual服务-------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m14.\033[0m搭建Web.virtual服务-------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "搭建Web.virtual服务------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  httpd &>/dev/null
 #配置Web内容访问:
@@ -444,7 +443,7 @@ Require ip 127.0.0.1 ::1 172.25.0.11
    else
        break
 fi
-systemctl restart httpd &>/dev/null && echo -e "*              \E[35m15.\033[0m搭建Web内容服务-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m15.\033[0m搭建Web内容服务-----------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "搭建Web内容服务------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  httpd &>/dev/null
 #实现动态Web内容:
@@ -465,7 +464,7 @@ WsgiScriptAlias / /var/www/myweb/webinfo.wsgi
    else
        break
 fi
-systemctl restart httpd &>/dev/null && echo -e "*              \E[35m16.\033[0m搭建动态Web内容-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart httpd &>/dev/null && echo -e "*              \E[35m16.\033[0m搭建动态Web内容-----------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "搭建动态Web内容------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  httpd &>/dev/null
 #创建一个脚本:
@@ -486,7 +485,7 @@ fi' > /root/foo.sh
 fi
 sh /root/foo.sh &>/dev/null        || 
 sh /root/foo.sh redhat &>/dev/null &&
-sh /root/foo.sh fedora &>/dev/null && echo -e "*              \E[35m17.\033[0m创建一个脚本--------------------------\033[33m[ OK$a]\033[0m                  *" || 
+sh /root/foo.sh fedora &>/dev/null && echo -e "*              \E[35m17.\033[0m创建一个脚本--------------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "创建一个脚本------------------\033[33m[Failed$a]\033[0m"
 #添加用户脚本:
 touch /root/batchusers &&
@@ -513,7 +512,7 @@ done
 fi
 sh /root/batchusers          &>/dev/null ||
 sh /root/batchusers wxk      &>/dev/null ||
-sh /root/batchusers userlist &>/dev/null && echo -e "*              \E[35m18.\033[0m脚本创建用户--------------------------\033[33m[ OK$a]\033[0m                  *" || 
+sh /root/batchusers userlist &>/dev/null && echo -e "*              \E[35m18.\033[0m脚本创建用户--------------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "脚本创建用户------------------\033[33m[Failed$a]\033[0m"
 #配置网络磁盘iscsi:
 #server0
@@ -530,6 +529,8 @@ ext4
 3200
 q
 EOF
+echo "自动设置targetcli:"
+echo "Loading..."
   targetcli <<EOF 
 backstores/block create iscsi_store /dev/vdb1
 iscsi/ create iqn.2016-02.com.example:server0
@@ -542,9 +543,17 @@ EOF
    else
        break
 fi
-systemctl restart target &>/dev/null && echo -e "*              \E[35m19.\033[0m配置iscsi服务端-----------------------\033[33m[ OK$a]\033[0m                  *" || 
+systemctl restart target &>/dev/null && echo -e "*              \E[35m19.\033[0m配置iscsi服务端-----------------------\033[33m[ OK$a]\033[0m                 *" || 
    echo -e "配置iscsi服务端------------------\033[33m[Failed$a]\033[0m"
 systemctl enable  target &>/dev/null
+touch part.sh
+chmod +x part.sh
+echo '#!/bin/bash
+parted /dev/sda mktable gpt mkpart primary 0 2200 <<EOF
+I
+EOF
+ ' > part.sh
+scp part.sh  root@172.25.0.10:/root/   &>/dev/null &&
 #desktop0@
 ssh  root@172.25.0.10 <<EOF                                                                   &>/dev/null
 yum -y install iscsi-initiator-utils                                                          &>/dev/null
@@ -557,18 +566,19 @@ systemctl enable  iscsid                                                        
 iscsiadm --mode discoverydb --type sendtargets --portal 172.25.0.11 3260 --discover           &>/dev/null
 systemctl restart iscsi                                                                       &>/dev/null
 systemctl enable  iscsi                                                                       &>/dev/null
-
+                               sh part.sh
+                                         mkfs.ext4 /dev/sda1                                  &>/dev/null
       mkdir /mnt/data
-  sed -i 's/startup = manual/startup = automatic/g' /var/lib/iscsi/nodes/iqn.2016-02.com.example\:server0/172.25.0.11\,3260\,1/default
+   sed -i 's/startup = manual/startup = automatic/g' /var/lib/iscsi/nodes/iqn.2016-02.com.example\:server0/172.25.0.11\,3260\,1/default
       echo "/dev/sda1 /mnt/data ext4 _netdev 0 0" >> /etc/fstab
    else
        break
 fi
-      
+mount -a                                                                                      &>/dev/null     
 EOF
 if [ $? -eq 0 ]
    then
-        echo -e "*              \E[35m20.\033[0m配置iscsi客户端-----------------------\033[33m[ OK$a]\033[0m                  *"
+        echo -e "*              \E[35m20.\033[0m配置iscsi客户端-----------------------\033[33m[ OK$a]\033[0m                 *"
    else
         echo -e "配置iscsi客户端-----------------\033[31m[Failed$a]\033[0m"
 fi
@@ -619,8 +629,8 @@ EOF
    else
        echo -e "配置mariadb服务----------------\033[31m[Failed$a]\033[0m"
 fi
-systemctl restart mariadb &>/dev/null && echo -e "*              \E[35m21.\033[0m配置mariadb服务-----------------------\033[33m[ OK$a]\033[0m                *" ||
+systemctl restart mariadb &>/dev/null && echo -e "*              \E[35m21.\033[0m配置mariadb服务-----------------------\033[33m[ OK$a]\033[0m                 *" ||
 echo -e "配置mariadb服务----------------\033[31m[Failed$a]\033[0m"
-echo    "*                 --------------自动答题完成!---------------                   *"
+echo    "*                 --------------自动答题完成!---------------                    *"
 echo    "==============================期待您的再次使用！！==============================="
 
