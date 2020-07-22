@@ -39,7 +39,7 @@ CODE_DIR="/deploy/code/web-demo"
 CONFIG_DIR="/deploy/config/web-demo"
 TMP_DIR="/deploy/tmp"
 TAR_DIR="/deploy/tar"
-LOCK_FILE="/tmp/deploy.lock"
+LOCK_FILE="/tmp/mydeploy.lock"
 
 usage(){
 	echo $"Usage:  $0 [ deploy | rollback]"
@@ -63,7 +63,7 @@ url_test(){
         if [ $? -ne 0 ];then
                 shell_unlock;
                 writelog "test error";
-		echo -e "\033[1;31m[ERROR]: This is project deploy Filad !\033[0m"
+		echo -e "\033[1;31m[ERROR]: This is project deploy Filad !\033[0m"&&exit
 	else
 		echo -e "\033[1;32m[INFO]: This is project deploy Successfully!\033[0m"
         fi
