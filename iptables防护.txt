@@ -1,0 +1,73 @@
+################oraclefirewall.sh##############################
+#-- 删除一条规则
+#iptables -D INPUT 11 （注意，这个11是行号，是iptables -L INPUT --line-numbers 所打印出来的行号）
+#!/bin/bash
+
+LC_ADDR=192.168.200.127
+LO_ADDR=127.0.0.1
+
+#必备工具
+yum -y install iptables-services >/dev/null 2>&1
+#关闭firewalld
+systemctl stop firewalld 
+systemctl disable firewalld >/dev/null 2>&1
+
+
+iptables -F
+#清除现有的规
+
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+#设置INPUT和OUTPUT链的默认规则为DROP，既不允许任何包到达本机，也不允许本机向外发包
+
+iptables -A INPUT -p ALL -s $LC_ADDR -d $LC_ADDR -j ACCEPT
+iptables -A OUTPUT -p ALL -s $LC_ADDR -d $LC_ADDR -j ACCEPT
+iptables -A INPUT -p ALL -s $LO_ADDR -d $LO_ADDR -j ACCEPT
+iptables -A OUTPUT -p ALL -s $LO_ADDR -d $LO_ADDR -j ACCEPT
+#允许本机和本机联系，必须打开，否则listener无法正常启动
+
+#icmp
+iptables  -A INPUT   -p icmp --icmp 8 -j ACCEPT
+iptables  -A OUTPUT  -p icmp --icmp 0 -j ACCEPT
+
+iptables -A INPUT -p ALL -s 10.111.62.218 -d 192.168.200.201 -j ACCEPT
+iptables -A OUTPUT -p ALL -s 192.168.200.201 -d 10.111.62.218 -j ACCEPT
+#ip点对点访问
+
+####nginx5099&5100
+iptables -A INPUT -p tcp --dport 5099 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 5099 -j ACCEPT
+#添加规则，允许入站的5099端口的连接，也就是允许其他主机访问本机的shuiwujuWeb
+iptables -A INPUT -p tcp --dport 5100 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 5100 -j ACCEPT
+#添加规则，允许入站的5100端口的连接，也就是允许其他主机访问本机的shuiwujuMysql
+
+
+iptables -A INPUT -p tcp --dport 6122 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 6122 -j ACCEPT
+#添加规则，允许入站的ssh连接
+
+
+#添加规则，允许入站的xxxx端口的连接，也就是允许其他主机通过监听器访问本机的数据库。
+#如果listener监听的不是xxxx端口，则要做相应的修改
+####mysql6001
+iptables -A INPUT -p tcp --dport 6001 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 6001 -j ACCEPT
+
+####mysql6002
+iptables -A INPUT -p tcp --dport 6002 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 6002 -j ACCEPT
+
+####mysql6003
+iptables -A INPUT -p tcp --dport 6003 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 6003 -j ACCEPT
+
+####mysql9000
+iptables -A INPUT -p tcp --dport 9000 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 9000 -j ACCEPT
+
+#保存配置
+service iptables save >/dev/null 2>&1
+systemctl restart iptables 
+#注意：修改配置文件需要重启服务
+################end of here##############################
